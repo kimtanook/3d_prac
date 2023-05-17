@@ -9,10 +9,23 @@ function Model() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentModel, setCurrentModel] = useState<THREE.Scene | null>(null);
   const [modelPath, setModelPath] = useRecoilState(modelValue);
-  let scene: THREE.Scene;
-  let camera: THREE.PerspectiveCamera;
-  let renderer: THREE.WebGLRenderer;
-  let controls: OrbitControls;
+  let scene = new THREE.Scene();
+
+  // 렌더러 설정
+  let renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // 카메라 설정
+  let camera = new THREE.PerspectiveCamera(30, 1);
+  camera.position.set(0, 0, 10);
+
+  // OrbitControls 생성
+  let controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.screenSpacePanning = false;
+  controls.minDistance = 1;
+  controls.maxDistance = 100;
 
   // 모델을 로드하고 렌더링하는 함수\
   const loadModel = () => {
@@ -27,13 +40,6 @@ function Model() {
       }
       setModelPath("");
     }
-    // 렌더러 설정
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // 카메라 설정
-    camera = new THREE.PerspectiveCamera(30, 1);
-    camera.position.set(0, 0, 10);
 
     if (containerRef.current) {
       containerRef.current.appendChild(renderer.domElement);
@@ -47,16 +53,7 @@ function Model() {
       // 로드가 완료되었을 때의 콜백 함수
       (gltf: GLTF) => {
         // 로드된 모델의 씬을 가져옴
-        scene = gltf.scene.children[0] as THREE.Scene;
-        // OrbitControls 생성
-        controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.screenSpacePanning = false;
-        controls.minDistance = 1;
-        controls.maxDistance = 100;
-        controls.maxPolarAngle = Math.PI / 2;
-
+        scene.add(gltf.scene);
         // 조명 추가
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
