@@ -6,37 +6,39 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { modelValue } from "./atom";
 
 function Model() {
+  // 3D 모델을 보여줄 ref
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentModel, setCurrentModel] = useState<THREE.Scene | null>(null);
+  // 3D 모델의 경로
   const [modelPath, setModelPath] = useRecoilState(modelValue);
+  // 컨트롤러 속성값들을 동적으로 조작하기 위한 state
+  const [controlsState, setControls] = useState<OrbitControls | null>(null);
+  // 우클릭 조작에 관한 state
+  const [panEnabled, setPanEnabled] = useState(true);
+  // 자동회전에 관한 state
+  const [rotateEnabled, setRotateEnabled] = useState(false);
+
+  // 씬 생성
   let scene = new THREE.Scene();
 
   // 렌더러 설정
   let renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(800, 800);
 
   // 카메라 설정
   let camera = new THREE.PerspectiveCamera(30, 1);
   camera.position.set(0, 0, 10);
 
-  // OrbitControls 생성
-  let controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.screenSpacePanning = false;
-  controls.minDistance = 1;
-  controls.maxDistance = 100;
+  // OrbitControls 기본 값 생성
+  const controls = new OrbitControls(camera, renderer.domElement);
 
-  // 모델을 로드하고 렌더링하는 함수\
+  // 모델을 로드하고 렌더링하는 함수
   const loadModel = () => {
     if (!modelPath) {
       return;
     }
-    if (currentModel) {
-      if (containerRef.current) {
-        while (containerRef.current.firstChild) {
-          containerRef.current.firstChild.remove();
-        }
+    if (containerRef.current) {
+      while (containerRef.current.firstChild) {
+        containerRef.current.firstChild.remove();
       }
       setModelPath("");
     }
@@ -75,15 +77,31 @@ function Model() {
         const animate = () => {
           requestAnimationFrame(animate);
           if (renderer && scene && camera) {
+            controls.update(); // OrbitControls 업데이트
             renderer.render(scene, camera);
           }
         };
 
         // 모델 로드 후 렌더링 루프 시작
         animate();
-        setCurrentModel(scene);
+        // OrbitControls의 속성값들을 동적으로 관리하기 위한 setState
+        setControls(controls);
       }
     );
+  };
+
+  // Pan 기능 활성화/비활성화 함수
+  const togglePan = () => {
+    setPanEnabled((prevPanEnabled) => !prevPanEnabled);
+    if (controlsState) {
+      controlsState.enablePan = !panEnabled;
+    }
+  };
+  const toggleRotate = () => {
+    setRotateEnabled((prevPanRotate) => !prevPanRotate);
+    if (controlsState) {
+      controlsState.autoRotate = !rotateEnabled;
+    }
   };
 
   useEffect(() => {
@@ -101,6 +119,12 @@ function Model() {
     <div>
       <button onClick={() => setModelPath("/building/scene.gltf")}>건물</button>
       <button onClick={() => setModelPath("/shiba/scene.gltf")}>강아지</button>
+      <button onClick={togglePan}>
+        {panEnabled ? "우클릭 조작 비활성화" : "우클릭 조작 활성화"}
+      </button>
+      <button onClick={toggleRotate}>
+        {rotateEnabled ? "자동회전 비활성화" : "자동회전 활성화"}
+      </button>
 
       <div ref={containerRef}></div>
     </div>
