@@ -3,15 +3,21 @@ import { useRecoilState } from "recoil";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { modelValue } from "./atom";
+import ColorPicker from "./ColorPicker";
+import { colorValue, modelValue } from "./atom";
 
 function Model() {
   // 3D 모델을 보여줄 ref
   const containerRef = useRef<HTMLDivElement>(null);
   // 3D 모델의 경로
   const [modelPath, setModelPath] = useRecoilState(modelValue);
-  // 컨트롤러 속성값들을 동적으로 조작하기 위한 state
+  const [selectColor, setselectColor] = useRecoilState(colorValue);
+  // 컨트롤러, 조명의 속성값들을 동적으로 조작하기 위한 state
   const [controlsState, setControls] = useState<OrbitControls | null>(null);
+  const [lightState, setLightState] = useState<THREE.DirectionalLight | null>(
+    null
+  );
+  console.log("lightState : ", lightState);
   // 우클릭 조작에 관한 state
   const [panEnabled, setPanEnabled] = useState(true);
   // 자동회전에 관한 state
@@ -56,13 +62,15 @@ function Model() {
       (gltf: GLTF) => {
         // 로드된 모델의 씬을 가져옴
         scene.add(gltf.scene);
+
         // 조명 추가
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight = new THREE.AmbientLight("#ffffff", 0.5);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(1, 1, 1).normalize();
+        const directionalLight = new THREE.DirectionalLight("#ffffff", 1);
+        directionalLight.position.set(10000, 200, -1000);
         scene.add(directionalLight);
+        setLightState(directionalLight);
 
         // 모델 크기 조정
         const box = new THREE.Box3().setFromObject(scene);
@@ -97,10 +105,18 @@ function Model() {
       controlsState.enablePan = !panEnabled;
     }
   };
+  // 자동회전 활성화/비활성화 함수
   const toggleRotate = () => {
     setRotateEnabled((prevPanRotate) => !prevPanRotate);
     if (controlsState) {
       controlsState.autoRotate = !rotateEnabled;
+    }
+  };
+  const changeColor = () => {
+    if (lightState) {
+      lightState.color.r = selectColor.r;
+      lightState.color.g = selectColor.g;
+      lightState.color.b = selectColor.b;
     }
   };
 
@@ -110,6 +126,7 @@ function Model() {
     // 컴포넌트가 언마운트될 때 Three.js 리소스 정리
     return () => {
       if (renderer) {
+        console.log("언마운트");
         renderer.dispose();
       }
     };
@@ -117,6 +134,7 @@ function Model() {
 
   return (
     <div>
+      <ColorPicker />
       <button onClick={() => setModelPath("/building/scene.gltf")}>건물</button>
       <button onClick={() => setModelPath("/shiba/scene.gltf")}>강아지</button>
       <button onClick={togglePan}>
@@ -125,6 +143,7 @@ function Model() {
       <button onClick={toggleRotate}>
         {rotateEnabled ? "자동회전 비활성화" : "자동회전 활성화"}
       </button>
+      <button onClick={changeColor}>조명적용</button>
 
       <div ref={containerRef}></div>
     </div>
