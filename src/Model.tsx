@@ -8,7 +8,10 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { modelValue } from "./atom";
 
 function Model() {
-  // 3D 모델을 보여줄 ref
+  // 로딩 표시 state
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 모델링 ref
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 3D 모델의 경로
@@ -61,6 +64,8 @@ function Model() {
       }
       setModelPath("");
     }
+
+    setIsLoading(true);
 
     if (containerRef.current) {
       containerRef.current.appendChild(renderer.domElement);
@@ -128,6 +133,16 @@ function Model() {
 
         // 모델 로드 후 렌더링 루프 시작
         animate();
+
+        setIsLoading(false);
+      },
+      (progressEvent) => {
+        // const progress = progressEvent.loaded / progressEvent.total;
+        // console.log(`Model loading progress: ${Math.round(progress * 100)}%`);
+      },
+      (error) => {
+        console.error("Error loading model:", error);
+        setIsLoading(false);
       }
     );
   };
@@ -209,7 +224,7 @@ function Model() {
       </button>
 
       <button onClick={resetCamera}>카메라위치리셋</button>
-
+      {isLoading ? <div>Loading...</div> : null}
       <div ref={containerRef}></div>
     </div>
   );
