@@ -6,10 +6,12 @@
 
 조명 위치 조정 가능
 
+배포주소 : https://3d-prac.vercel.app/
+
 ### 실행방법
 
 1. git clone
-2. 프로젝트 폴더를 에디터로 오픈 
+2. 프로젝트 폴더를 에디터로 오픈
 3. 터미널 창에서 npm install
 4. npm start
 
